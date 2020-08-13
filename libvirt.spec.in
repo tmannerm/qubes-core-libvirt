@@ -1,12 +1,13 @@
 # -*- rpm-spec -*-
 
-# This spec file assumes you are building on a Fedora or RHEL version
+# This spec file assumes you are building on a Fedora, RHEL or SUSE version
 # that's still supported by the vendor. It may work on other distros
 # or versions, but no effort will be made to ensure that going forward.
 %define min_rhel 7
 %define min_fedora 30
+%define min_suse 1500
 
-%if (0%{?fedora} && 0%{?fedora} >= %{min_fedora}) || (0%{?rhel} && 0%{?rhel} >= %{min_rhel})
+%if (0%{?fedora} && 0%{?fedora} >= %{min_fedora}) || (0%{?rhel} && 0%{?rhel} >= %{min_rhel}) || (0%{?suse_version} && 0%{?suse_version} >= %{min_suse})
     %define supported_platform 1
 %else
     %define supported_platform 0
@@ -38,7 +39,7 @@
 %endif
 
 # On RHEL 7 and older macro _vpath_builddir is not defined.
-%if 0%{?rhel} <= 7
+%if 0%{?rhel} <= 7 || 0%{?suse_version} == 1500
     %define _vpath_builddir %{_target_platform}
 %endif
 
@@ -188,7 +189,7 @@
 %define with_bash_completion  0%{!?_without_bash_completion:1}
 
 # Use Python 3 when possible, Python 2 otherwise
-%if 0%{?fedora} || 0%{?rhel} > 7
+%if 0%{?fedora} || 0%{?rhel} > 7 || 0%{?suse_version} == 1500
     %define python python3
 %else
     %define python python2
@@ -290,6 +291,10 @@ Patch0008: 0008-libxl-add-linux-stubdom-support.patch
 Patch0009: 0009-libxl-add-support-for-qubes-graphic-device.patch
 Patch0010: 0010-libxl-add-support-for-stubdom_mem-option.patch
 Patch0011: 0011-Add-permissive-option-for-PCI-devices.patch
+# SUSE specific patches
+%if 0%{?suse_version} == 1500
+Patch1001: 1001-libvirt-suse-netcontrol.patch
+%endif
 
 Requires: libvirt-daemon = %{epoch}:%{version}-%{release}
 %if %{with_network}
@@ -436,7 +441,11 @@ BuildRequires: fuse-devel >= 2.8.6
 BuildRequires: libssh2-devel >= 1.3.0
 %endif
 
+%if 0%{?suse_version} == 1500
+BuildRequires: libnetcontrol-devel
+%else
 BuildRequires: netcf-devel >= 0.2.2
+%endif
 %if %{with_esx}
 BuildRequires: libcurl-devel
 %endif
@@ -607,12 +616,20 @@ capabilities.
 Summary: Interface driver plugin for the libvirtd daemon
 Requires: libvirt-daemon = %{epoch}:%{version}-%{release}
 Requires: libvirt-libs = %{epoch}:%{version}-%{release}
+%if 0%{?suse_version} == 1500
+Requires: libnetcontrol
+%else
 Requires: netcf-libs >= 0.2.2
+%endif
 
 %description daemon-driver-interface
 The interface driver plugin for the libvirtd daemon, providing
 an implementation of the network interface APIs using the
+%if 0%{?suse_version} == 1500
+netcontrol library.
+%else
 netcf library
+%endif
 
 
 %package daemon-driver-secret
@@ -1089,7 +1106,7 @@ Libvirt plugin for NSS for translating domain names into IP addresses.
 
 %build
 %if ! %{supported_platform}
-echo "This RPM requires either Fedora >= %{min_fedora} or RHEL >= %{min_rhel}"
+echo "This RPM requires Fedora >= %{min_fedora}, RHEL >= %{min_rhel} or SUSE >= %{min_suse}"
 exit 1
 %endif
 
@@ -1286,7 +1303,12 @@ cd %{_vpath_builddir}
            %{?arg_numad} \
            --with-capng \
            %{?arg_fuse} \
+%if 0%{?suse_version} == 1500
+           --with-netcontrol \
+           --without-netcf \
+%else
            --with-netcf \
+%endif
            --with-selinux \
            %{?arg_selinux_mount} \
            --without-apparmor \
@@ -1438,12 +1460,12 @@ then
 fi
 
 %post libs
-%if 0%{?rhel} == 7
+%if 0%{?rhel} == 7 || 0%{?suse_version} == 1500
 /sbin/ldconfig
 %endif
 
 %postun libs
-%if 0%{?rhel} == 7
+%if 0%{?rhel} == 7 || 0%{?suse_version} == 1500
 /sbin/ldconfig
 %endif
 

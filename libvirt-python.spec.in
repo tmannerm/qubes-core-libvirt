@@ -1,37 +1,38 @@
 # -*- rpm-spec -*-
 
-# This spec file assumes you are building on a Fedora or RHEL version
+# This spec file assumes you are building on a Fedora, RHEL or SUSE version
 # that's still supported by the vendor. It may work on other distros
 # or versions, but no effort will be made to ensure that going forward
 %define min_rhel 7
 %define min_fedora 29
+%define min_suse 1500
 
-%if (0%{?fedora} && 0%{?fedora} >= %{min_fedora}) || (0%{?rhel} && 0%{?rhel} >= %{min_rhel})
+%if (0%{?fedora} && 0%{?fedora} >= %{min_fedora}) || (0%{?rhel} && 0%{?rhel} >= %{min_rhel}) || (0%{?suse_version} && 0%{?suse_version} >= %{min_suse})
     %define supported_platform 1
 %else
     %define supported_platform 0
 %endif
 
 %define _with_python2 1
-%if 0%{?fedora} > 30 || 0%{?rhel} > 7
+%if 0%{?fedora} > 30 || 0%{?rhel} > 7 || 0%{?suse_version} == 1500
 %define _with_python2 0
 %endif
 
 %define _with_python3 0
-%if 0%{?fedora} || 0%{?rhel} > 7
+%if 0%{?fedora} || 0%{?rhel} > 7 || 0%{?suse_version} == 1500
 %define _with_python3 1
 %endif
 
 # Whether py2 packages are assumed to have python2- name prefix
 %define py2_versioned_deps 0
-%if 0%{?fedora} || 0%{?rhel} > 7
+%if 0%{?fedora} || 0%{?rhel} > 7 || 0%{?suse_version} == 1500
 %define py2_versioned_deps 1
 %endif
 
 %{!?with_python2: %define with_python2 %{_with_python2}}
 %{!?with_python3: %define with_python3 %{_with_python3}}
 
-Summary: The libvirt virtualization API python2 binding
+Summary: The libvirt virtualization API Python binding
 Name: libvirt-python
 Version: @VERSION@
 Release: @REL@%{?dist}%{?extra_release}
@@ -75,7 +76,7 @@ of recent versions of Linux (and other OSes).
 
 %if %{with_python2}
 %package -n python2-libvirt
-Summary: The libvirt virtualization API python2 binding
+Summary: The libvirt virtualization API Python 2 binding
 Url: http://libvirt.org
 License: LGPLv2+
 %{?python_provide:%python_provide python2-libvirt}
@@ -91,7 +92,7 @@ of recent versions of Linux (and other OSes).
 
 %if %{with_python3}
 %package -n python3-libvirt
-Summary: The libvirt virtualization API python3 binding
+Summary: The libvirt virtualization API Python 3 binding
 Url: http://libvirt.org
 License: LGPLv2+
 %{?python_provide:%python_provide python3-libvirt}
@@ -115,19 +116,19 @@ find examples -type f -exec chmod 0644 \{\} \;
 
 %build
 %if ! %{supported_platform}
-echo "This RPM requires either Fedora >= %{min_fedora} or RHEL >= %{min_rhel}"
+echo "This RPM requires Fedora >= %{min_fedora}, RHEL >= %{min_rhel} or SUSE >= %{min_suse}"
 exit 1
 %endif
 
 %if %{with_python2}
-%if 0%{?fedora} || 0%{?rhel} >= 8
+%if 0%{?fedora} || 0%{?rhel} >= 8 || 0%{?suse_version} == 1500
 %py2_build
 %else
 CFLAGS="$RPM_OPT_FLAGS" %{__python2} setup.py build
 %endif
 %endif
 %if %{with_python3}
-%if 0%{?fedora} || 0%{?rhel} >= 8
+%if 0%{?fedora} || 0%{?rhel} >= 8 || 0%{?suse_version} == 1500
 %py3_build
 %else
 CFLAGS="$RPM_OPT_FLAGS" %{__python3} setup.py build
@@ -136,14 +137,14 @@ CFLAGS="$RPM_OPT_FLAGS" %{__python3} setup.py build
 
 %install
 %if %{with_python2}
-%if 0%{?fedora} || 0%{?rhel} >= 8
+%if 0%{?fedora} || 0%{?rhel} >= 8 || 0%{?suse_version} == 1500
 %py2_install
 %else
 %{__python2} setup.py install --skip-build --root=%{buildroot}
 %endif
 %endif
 %if %{with_python3}
-%if 0%{?fedora} || 0%{?rhel} >= 8
+%if 0%{?fedora} || 0%{?rhel} >= 8 || 0%{?suse_version} == 1500
 %py3_install
 %else
 %{__python3} setup.py install --skip-build --root=%{buildroot}

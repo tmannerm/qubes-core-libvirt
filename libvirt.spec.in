@@ -617,7 +617,7 @@ Summary: Interface driver plugin for the libvirtd daemon
 Requires: libvirt-daemon = %{epoch}:%{version}-%{release}
 Requires: libvirt-libs = %{epoch}:%{version}-%{release}
 %if 0%{?suse_version} == 1500
-Requires: libnetcontrol
+Requires: libnetcontrol0
 %else
 Requires: netcf-libs >= 0.2.2
 %endif
@@ -1006,7 +1006,11 @@ Requires: ncurses
 # Needed by /usr/libexec/libvirt-guests.sh script.
 Requires: gettext
 # Needed by virt-pki-validate script.
+%if 0%{?suse_version} == 1500
+Requires: gnutls
+%else
 Requires: gnutls-utils
+%endif
 %if %{with_bash_completion}
 Requires: %{name}-bash-completion = %{epoch}:%{version}-%{release}
 %endif
